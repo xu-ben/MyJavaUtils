@@ -4,10 +4,11 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-public class URLConnectorTest {
+public class WebClientTest {
 
     public void testEncode0() {
         try {
@@ -45,18 +46,27 @@ public class URLConnectorTest {
         System.out.println(muc.getContent(con, Charset.forName("utf-8")));
     }
 
-    @Test
     public void test3() throws IOException {
         WebClientAgent muc = WebClientAgent.getInstance();
         URL url = new URL("https://www.jd.com");
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-//		con.setRequestProperty("User-Agent", microAgentstr);
-        con.setRequestProperty("User-Agent", MyUserAgentsLib.getAgentsOfChrome());
-        con.connect();
-        System.out.println(muc.getContent(con, Charset.forName("utf-8")));
+        System.out.println(muc.getContent(url, MyUserAgentsLib.getAgentsOfChrome(), Charset.forName("utf-8")));
     }
 
-    public void testTimeout() {
+    public void testUserAgent() throws IOException {
+        WebClientAgent muc = WebClientAgent.getInstance();
+        URL url = new URL("https://www.baidu.com/s?ie=utf-8&wd=手机");
+        System.out.println(muc.getContent(url, "", Charset.forName("utf-8")));
+        System.out.println();
+        System.out.flush();
+        System.err.println(muc.getContent(url, MyUserAgentsLib.getAgentsOfChrome(), Charset.forName("utf-8")));
+    }
+
+
+    @Test
+    public void testTimeout() throws IOException {
+        WebClientAgent muc = WebClientAgent.getInstance();
+        URL url = new URL("http://acm.bjfu.edu.cn");
+        System.out.println(muc.getContent(url, MyUserAgentsLib.getAgentsOfChrome(), Charset.forName("utf-8")));
     }
 
 }

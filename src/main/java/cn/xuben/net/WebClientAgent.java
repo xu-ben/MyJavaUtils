@@ -123,13 +123,18 @@ public final class WebClientAgent {
     /**
      *
      * 给定一个url，方法会去访问，并返回其网页内容
-     * <b>此方法与另一个方法不一样，它不会多次访问。如果用户未指定Charset，方法内部最多会尝试从连接的元信息中取</b>
+     * <b>不会多次访问, 即使用户未指定Charset，最多会尝试从连接的元信息中取</b>
+     * 方法执行完毕会关闭连接
      */
-    public StringBuilder getContent(URL url, Charset cs) throws IOException {
+    public StringBuilder getContent(URL url, String userAgent, Charset cs) throws IOException {
         InputStream is = null;
         try {
 //            Proxy p;
             URLConnection uc = url.openConnection();
+            if (userAgent != null) {
+                uc.setRequestProperty("User-Agent", userAgent);
+            }
+//            uc.setReadTimeout(3000);
             uc.connect();
             is = uc.getInputStream();
             return getTextFromInputStream(is, cs);
@@ -152,33 +157,7 @@ public final class WebClientAgent {
         return getTextFromInputStream(is, cs);
     }
 
-    // TODO 移至IOAgent
-    /**
-     * 从InputStream中读取所有内容到StringBuilder中,
-     * InputStream可以各种形式获取，例如从文件、从URL等
-     * <b>注意控制内容的总长度，该方法不管</b>
-     * <b>该方法内部不会主动close该InputStream, 捕获的异常直接抛出</b>
-     * @param cs 指定编码，如果为null，则使用默认编码
-     */
-    public StringBuilder getTextFromInputStream(InputStream is, Charset cs) throws IOException {
-        InputStreamReader isr;
-        if (cs != null) {
-            isr = new InputStreamReader(is, cs);
-        } else {
-            isr = new InputStreamReader(is);
-        }
-        BufferedReader br = new BufferedReader(isr);
-        StringBuilder sb = new StringBuilder();
-        char[] buf = new char[512];
-        int len;
-        while ((len = br.read(buf)) > 0) {
-            sb.append(buf, 0, len);
-        }
-        return sb;
-    }
-
-
-    /**
+   /**
      * @return 一个本类的实例
      */
     public static synchronized WebClientAgent getInstance() {
