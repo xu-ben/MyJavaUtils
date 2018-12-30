@@ -1,11 +1,7 @@
 package cn.xuben.net;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.URL;
-import java.net.URLConnection;
+import java.io.*;
+import java.net.*;
 import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -29,7 +25,7 @@ public final class WebClientAgent {
      *
      * @return charset name或null(未解析到)
      */
-    private String getEncodingName(URLConnection conn) {
+    private String getEncodingNameFromConn(URLConnection conn) {
         String ret = conn.getContentEncoding();
         if (ret != null) {
             return ret;
@@ -50,12 +46,14 @@ public final class WebClientAgent {
      *
      * @return 解析获得的编码名称字符串，若解析不到编码，则返回null
      */
+    @Deprecated
     public String getEncodingName(URL url) throws IOException {
         URLConnection conn = url.openConnection();
+//        conn.connect(); 不用连接就可以读，因为openConnection了就是建立了tcp连接了
         /**
          * 如果能从header中解析出charset，则返回
          */
-        String result = getEncodingName(conn);
+        String result = getEncodingNameFromConn(conn);
         if (result != null) {
             return result;
         }
@@ -89,75 +87,151 @@ public final class WebClientAgent {
         return null;
     }
 
+    public StringBuilder doPost(URL url, String post) throws IOException {
+        // TODO 方法还未完成
+        URLConnection urlConn = url.openConnection();
+//            Proxy p;
+        if (!(urlConn instanceof HttpURLConnection)) {
+            throw new ProtocolException("the url'protocol must be http or https");
+        }
+        HttpURLConnection conn = (HttpURLConnection) urlConn;
+        conn.setDoOutput(true);
+        // Post 请求不能使用缓存
+        conn.setUseCaches(false);
+
+        // 设定传送的内容类型是可序列化的java对象
+        // (如果不设此项,在传送序列化对象时,当WEB服务默认的不是这种类型时可能抛java.io.EOFException)
+        conn.setRequestProperty("Content-type", "application/x-java-serialized-object");
+
+        // 设定请求的方法为"POST"，默认是GET
+        conn.setRequestMethod("POST");
+        conn.connect();
+        OutputStream output = conn.getOutputStream();
+        InputStream input = conn.getInputStream();
+        return null;
+    }
+
     /**
-     * 给定一个url，方法会去访问，并返回其网页内容文本
+     * 给定一个url字符串，方法会去<b>阻塞式</b>访问，并返回其网页内容文本
      *
      * @param urlStr   合法url字符串
-     * @param encoding 最好指定。如果不指定(设为null)，方法内部可能会通过多访问一次并解析得到encoding
+     * @param encoding 如果不指定(设为null)，方法内部会尝试从连接的状态信息中读取此值，再不行就采用系统默认编码
      */
-    public String getContent(String urlStr, String encoding) throws IOException {
-        InputStream is = null;
-        try {
-            URL url = new URL(urlStr);
-//            Proxy p;
-            URLConnection uc = url.openConnection();
-            uc.connect();
-            if (encoding == null) {
-                encoding = getEncodingName(uc);
-            }
-            Charset cs = null;
-            if (encoding != null) {
-                cs = Charset.forName(encoding);
-            }
-            is = uc.getInputStream();
-            return getTextFromInputStream(is, Charset.forName(encoding)).toString();
-        } catch (IOException ioe) {
-           throw ioe;
-        } finally {
-            if (is != null) {
-                is.close();
-            }
+    public StringBuilder doGetSimply(String urlStr, String encoding) throws IOException {
+        URL url = new URL(urlStr);
+        Charset cs = null;
+        if (encoding != null) {
+            cs = Charset.forName(encoding);
         }
+        return doGetFromUrl(url, null, 0, 0, cs);
     }
 
     /**
-     *
-     * 给定一个url，方法会去访问，并返回其网页内容
-     * <b>不会多次访问, 即使用户未指定Charset，最多会尝试从连接的元信息中取</b>
-     * 方法执行完毕会关闭连接
+     * 默认的doGet方法，传入的三个参数含义同其它方法，连接和读取限时分别是20s和40s
      */
-    public StringBuilder getContent(URL url, String userAgent, Charset cs) throws IOException {
+    public StringBuilder doGetByDefault(String urlStr, String userAgent, String encoding) throws IOException {
+        URL url = new URL(urlStr);
+        Charset cs = null;
+        if (encoding != null) {
+            cs = Charset.forName(encoding);
+        }
+        return doGetFromUrl(url, userAgent, 20 * 1000, 40 * 1000, cs);
+    }
+
+    /**
+     * 使用Get方法，获取指定url上的网页文本内容
+     *
+     * @param url       必须是http或https, 否则会报错
+     * @param userAgent 如果不需要，设为null即可
+     * @param cs        网页文本的编码，若未指定(null)，方法内部会尝试从连接的状态信息中读取此值，再不行就采用系统默认编码
+     * @throws IOException 如果方法执行超时(连接等待20s，读取等待40s)，会抛出java.net.SocketTimeoutException异常，其他情况的异常也会正常抛出
+     */
+    public StringBuilder doGetFromUrlInDefaultTime(URL url, String userAgent, Charset cs) throws IOException {
+        return doGetFromUrl(url, userAgent, 20 * 1000, 40 * 1000, cs);
+    }
+
+    /**
+     * 使用Get方法，获取指定url上的网页文本内容
+     *
+     * @param url         必须是http或https, 否则会报错
+     * @param userAgent   如果不需要，设为null即可
+     * @param connTimeout 建立连接的超时时间，单位毫秒
+     * @param readTimeout 建立连接之后读取网页的超时时间，单位毫秒
+     * @param cs          网页文本的编码，若未指定(null)，方法内部会尝试从连接的状态信息中读取此值，再不行就采用系统默认编码
+     * @throws IOException 如果方法执行超时，会抛出java.net.SocketTimeoutException异常，其他情况的异常也会正常抛出
+     */
+    public StringBuilder doGetFromUrl(URL url, String userAgent, int connTimeout, int readTimeout, Charset cs) throws IOException {
+        URLConnection urlConn = url.openConnection();
+//            Proxy p;
+        if (!(urlConn instanceof HttpURLConnection)) {
+            throw new ProtocolException("the url'protocol must be http or https");
+        }
+        HttpURLConnection conn = (HttpURLConnection) urlConn;
+        if (userAgent != null) {
+            conn.setRequestProperty("User-Agent", userAgent);
+        }
+        if (connTimeout > 0) {
+            conn.setConnectTimeout(connTimeout);
+        }
+        if (readTimeout > 0) {
+            conn.setReadTimeout(readTimeout);
+        }
+        return connectAndReadFromConn(conn, cs);
+    }
+
+    /**
+     * 给定一个准备好，但还未连接的对象，连接并读取得到指定编码的网页内容
+     *
+     * @param cs 网页文本的编码，若未指定(null)，方法内部会尝试从连接的状态信息中读取此值，再不行就采用系统默认编码
+     */
+    private StringBuilder connectAndReadFromConn(HttpURLConnection conn, Charset cs) throws IOException {
         InputStream is = null;
         try {
-//            Proxy p;
-            URLConnection uc = url.openConnection();
-            if (userAgent != null) {
-                uc.setRequestProperty("User-Agent", userAgent);
+            conn.connect();
+            if (cs == null) {
+                String cn = getEncodingNameFromConn(conn);
+                if (cn != null) {
+                    cs = Charset.forName(cn);
+                }
             }
-//            uc.setReadTimeout(3000);
-            uc.connect();
-            is = uc.getInputStream();
+            int code = conn.getResponseCode();
+            if (code >= 300 || code < 200) {
+                throw new IOException("the response code is " + code);
+            }
+            is = conn.getInputStream();
             return getTextFromInputStream(is, cs);
-        } catch (IOException ioe) {
-            throw ioe;
+        } catch (IOException e) {
+            throw e;
         } finally {
             if (is != null) {
                 is.close();
             }
+            conn.disconnect();
         }
     }
 
     /**
-     *
      * 给定一个连接好的连接对象，得到指定编码的网页内容
      * <b>此方法内部不会主动关闭连接</b>
+     *
+     * @param cs 网页文本的编码，若未指定(null)，方法内部会尝试从连接的状态信息中读取此值，再不行就采用系统默认编码
      */
-    public StringBuilder getContent(URLConnection conn, Charset cs) throws IOException {
-        InputStream is = conn.getInputStream();
-        return getTextFromInputStream(is, cs);
+    public StringBuilder getContentFromConn(HttpURLConnection conn, Charset cs) throws IOException {
+        if (cs == null) {
+            String cn = getEncodingNameFromConn(conn);
+            if (cn != null) {
+                cs = Charset.forName(cn);
+            }
+        }
+        int code = conn.getResponseCode();
+        if (code >= 300 || code < 200) {
+            throw new IOException("the response code is " + code);
+        }
+        return getTextFromInputStream(conn.getInputStream(), cs);
     }
 
-   /**
+
+    /**
      * @return 一个本类的实例
      */
     public static synchronized WebClientAgent getInstance() {
