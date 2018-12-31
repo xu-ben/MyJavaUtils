@@ -1,10 +1,9 @@
 import cn.xuben.net.WebClientAgent;
-import cn.xuben.net.MyUserAgentsLib;
+import cn.xuben.net.UserAgentsLib;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.*;
 import java.nio.charset.Charset;
 
 public class WebClientTest {
@@ -19,7 +18,6 @@ public class WebClientTest {
         }
     }
 
-    @Test
     public void testEncode1() {
         String[] urlStrArr = {"http://www.cnblogs.com/moonbay", "https://www.cnblogs.com/moonbay", "https://www.jd.com", "http://www.baidu.com", "https://www.baidu.com", "http://www.gov.cn"};
         try {
@@ -51,7 +49,7 @@ public class WebClientTest {
 //        URL url = new URL("https://www.jd.com");
         URL url = new URL("http://acm.bjfu.edu.cn");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        conn.setRequestProperty("User-Agent", MyUserAgentsLib.getAgentsOfChrome());
+        conn.setRequestProperty("User-Agent", UserAgentsLib.defaultOfChrome());
         conn.setConnectTimeout(30000);
 //        conn.setReadTimeout(30000);
         conn.connect();
@@ -70,19 +68,19 @@ public class WebClientTest {
     public void testUserAgent() throws IOException {
         WebClientAgent muc = WebClientAgent.getInstance();
         URL url = new URL("https://www.baidu.com");
-        System.out.println(muc.doGetFromUrlInDefaultTime(url,null, Charset.forName("utf-8")));
+        System.out.println(muc.doGetDirectlyInDefaultTime(url, null, Charset.forName("utf-8")));
         System.out.println();
         System.out.flush();
-        System.err.println(muc.doGetFromUrlInDefaultTime(url, MyUserAgentsLib.getAgentsOfChrome(), Charset.forName("utf-8")));
+        System.err.println(muc.doGetDirectlyInDefaultTime(url, UserAgentsLib.defaultOfChrome(), Charset.forName("utf-8")));
     }
 
     public void testUserAgent2() throws IOException {
         WebClientAgent muc = WebClientAgent.getInstance();
         URL url = new URL("https://www.baidu.com/s?ie=utf-8&wd=手机");
-        System.out.println(muc.doGetFromUrlInDefaultTime(url, null, Charset.forName("utf-8")));
+        System.out.println(muc.doGetDirectlyInDefaultTime(url, null, Charset.forName("utf-8")));
         System.out.println();
         System.out.flush();
-        System.err.println(muc.doGetFromUrlInDefaultTime(url, MyUserAgentsLib.getAgentsOfChrome(), Charset.forName("utf-8")));
+        System.err.println(muc.doGetDirectlyInDefaultTime(url, UserAgentsLib.defaultOfChrome(), Charset.forName("utf-8")));
     }
 
     public void testTimeout() throws IOException {
@@ -92,9 +90,26 @@ public class WebClientTest {
         URL url = new URL(urlStr);
 //        StringBuilder str = agent.doGetFromUrl(url, MyUserAgentsLib.getAgentsOfChrome(), 20 * 1000, 40 * 1000, Charset.forName("utf-8"));
 //        StringBuilder str = agent.doGetFromUrlInDefaultTime(url, MyUserAgentsLib.getAgentsOfChrome(), Charset.forName("utf-8"));
-        StringBuilder str = agent.doGetByDefault(urlStr, MyUserAgentsLib.getAgentsOfChrome(), "utf-8");
+        StringBuilder str = agent.doGetByDefault(urlStr, UserAgentsLib.defaultOfChrome(), "utf-8");
         System.err.println(str);
     }
 
+    public void testPost() throws IOException {
+        WebClientAgent agent = WebClientAgent.getInstance();
+        String urlStr = "https://www.baidu.com/s";
+        String postData = "ie=utf-8&wd=phone";
+        System.out.println(agent.doPost(new URL(urlStr), postData));
+    }
+
+    @Test
+    public void testProxy() throws IOException {
+        InetSocketAddress addr = new InetSocketAddress("112.65.53.177",4275);
+        Proxy proxy = new Proxy(Proxy.Type.HTTP, addr);
+//        Proxy proxy = null;
+        WebClientAgent agent = WebClientAgent.getInstance();
+        URL url = new URL("https://www.baidu.com/s?ie=utf-8&wd=隆胸");
+        StringBuilder str = agent.doGetByProxyInDefaultTime(url, proxy, UserAgentsLib.defaultOfChrome(), Charset.forName("utf-8"));
+        System.err.println(str);
+    }
 
 }
