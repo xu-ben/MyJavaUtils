@@ -1,3 +1,5 @@
+package cn.xuben;
+
 import cn.xuben.net.WebClientAgent;
 import cn.xuben.net.UserAgentsLib;
 import org.junit.Test;
