@@ -50,14 +50,14 @@ public final class WebClientAgent {
     public String getEncodingName(URL url) throws IOException {
         URLConnection conn = url.openConnection();
 //        conn.connect(); 不用连接就可以读，因为openConnection了就是建立了tcp连接了
-        /**
+        /*
          * 如果能从header中解析出charset，则返回
          */
         String result = getEncodingNameFromConn(conn);
         if (result != null) {
             return result;
         }
-        /**
+        /*
          * 如果不能从header中解析出charset，则解析网页meta从中获取charset
          * TODO 优化
          * 目前这种写法是有问题的，一是应该只解析<head></head>内部, 二是不能按行读
@@ -177,11 +177,10 @@ public final class WebClientAgent {
     }
 
     /**
-     *
      * 使用代理Get指定url上的网页文本内容
      *
      * @param url       必须是http或https, 否则会报错
-     * @param proxy
+     * @param proxy     建立网络连接所用的代理，为null表示不使用代理
      * @param userAgent 如果不需要，设为null即可
      * @param cs        网页文本的编码，若未指定(null)，方法内部会尝试从连接的状态信息中读取此值，再不行就采用系统默认编码
      * @throws IOException 如果方法执行超时(连接等待30s，读取等待40s)，会抛出java.net.SocketTimeoutException异常，其他情况的异常也会正常抛出
