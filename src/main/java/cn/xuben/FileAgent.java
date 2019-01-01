@@ -13,17 +13,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.Charset;
 
 /**
  * 文件读写等工具类
  * Create Date：	2013-03-29
+ * TODO 需大量优化
  */
-public final class IOAgent {
+public final class FileAgent {
 
 	/**
 	 * 全局唯一实例
 	 */
-	private static IOAgent ioagent = null;
+	private static FileAgent agent = null;
 
 	/**
 	 * 文件BOM头的数值
@@ -33,17 +35,17 @@ public final class IOAgent {
 	/**
 	 * 构造函数私有
 	 */
-	private IOAgent() {
+	private FileAgent() {
 	}
 
 	/**
 	 * @return 一个本类的实例
 	 */
-	public static synchronized IOAgent getInstance() {
-		if (ioagent == null) {
-			ioagent = new IOAgent();
+	public static synchronized FileAgent getInstance() {
+		if (agent == null) {
+			agent = new FileAgent();
 		}
-		return ioagent;
+		return agent;
 	}
 
 	/**

@@ -1,5 +1,7 @@
 package cn.xuben.net;
 
+import cn.xuben.StreamAgent;
+
 import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
@@ -243,7 +245,7 @@ public final class WebClientAgent {
                 throw new IOException("the response code is " + code);
             }
             is = conn.getInputStream();
-            return getTextFromInputStream(is, cs);
+            return StreamAgent.getInstance().getTextFromInputStream(is, cs);
         } catch (IOException e) {
             throw e;
         } finally {
@@ -271,9 +273,8 @@ public final class WebClientAgent {
         if (code >= 300 || code < 200) {
             throw new IOException("the response code is " + code);
         }
-        return getTextFromInputStream(conn.getInputStream(), cs);
+        return StreamAgent.getInstance().getTextFromInputStream(conn.getInputStream(), cs);
     }
-
 
     /**
      * @return 一个本类的实例
