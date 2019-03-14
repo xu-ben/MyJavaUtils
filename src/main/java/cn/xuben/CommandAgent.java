@@ -7,14 +7,19 @@ import java.io.*;
  */
 public final class CommandAgent {
 
-    /**
-     * 全局唯一实例
-     */
-    private static CommandAgent agent = null;
-
     private CommandAgent() {
     }
 
+    private static class CommandAgentHolder {
+        private static final CommandAgent agent = new CommandAgent();
+    }
+
+    /**
+     * @return 一个本类的全局唯一实例
+     */
+    public static CommandAgent getInstance() {
+        return CommandAgentHolder.agent;
+    }
 
     /**
      * 在当前目录(".")下，阻塞式执行shell命令，返回命令在stdout中的输出内容
@@ -170,16 +175,6 @@ public final class CommandAgent {
             }
         }
         return true;
-    }
-
-    /**
-     * @return 一个本类的实例
-     */
-    public static synchronized CommandAgent getInstance() {
-        if (agent == null) {
-            agent = new CommandAgent();
-        }
-        return agent;
     }
 
 }

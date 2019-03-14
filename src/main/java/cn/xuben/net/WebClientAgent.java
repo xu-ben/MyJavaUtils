@@ -13,14 +13,19 @@ import java.util.regex.Pattern;
  */
 public final class WebClientAgent {
 
-    /**
-     * 全局唯一实例
-     */
-    private static WebClientAgent agent = null;
-
     private WebClientAgent() {
     }
 
+    private static class WebClientAgentHolder {
+        private static final WebClientAgent agent = new WebClientAgent();
+    }
+
+    /**
+     * @return 一个本类的全局唯一实例
+     */
+    public static WebClientAgent getInstance() {
+        return WebClientAgentHolder.agent;
+    }
 
     /**
      * 试图从连接的header中解析出charset name
@@ -274,16 +279,6 @@ public final class WebClientAgent {
             throw new IOException("the response code is " + code);
         }
         return StreamAgent.getInstance().getTextFromInputStream(conn.getInputStream(), cs);
-    }
-
-    /**
-     * @return 一个本类的实例
-     */
-    public static synchronized WebClientAgent getInstance() {
-        if (agent == null) {
-            agent = new WebClientAgent();
-        }
-        return agent;
     }
 
 }

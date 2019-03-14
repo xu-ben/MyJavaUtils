@@ -9,29 +9,22 @@ import java.nio.charset.Charset;
 public final class StreamAgent {
 
     /**
-     * 全局唯一实例
-     */
-    private static StreamAgent agent = null;
-
-    /**
      * 读取的时候的缓冲char数组的大小
      */
     private static final int BUFF_SIZE = 512;
 
-    /**
-     * 构造函数私有
-     */
     private StreamAgent() {
     }
 
+    private static class StreamAgentHolder {
+        private static final StreamAgent agent = new StreamAgent();
+    }
+
     /**
-     * @return 一个本类的实例
+     * @return 一个本类的全局唯一实例
      */
-    public static synchronized StreamAgent getInstance() {
-        if (agent == null) {
-            agent = new StreamAgent();
-        }
-        return agent;
+    public static StreamAgent getInstance() {
+        return StreamAgentHolder.agent;
     }
 
     /**

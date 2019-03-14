@@ -9,5 +9,11 @@
             <url>https://raw.githubusercontent.com/xu-ben/MyJavaUtils/master/repository</url>
         </repository>
     </repositories>
+### 然后再添加依赖
+    <dependency>
+        <groupId>cn.xuben</groupId>
+        <artifactId>utils</artifactId>
+    </dependency>
+
 
 

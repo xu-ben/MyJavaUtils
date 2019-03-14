@@ -23,34 +23,27 @@ import java.nio.charset.Charset;
 public final class FileAgent {
 
 	/**
-	 * 全局唯一实例
-	 */
-	private static FileAgent agent = null;
-
-	/**
 	 * 文件BOM头的数值
 	 */
 	private final static int BOM_VALUE = 65279;
 
-	/**
-	 * 构造函数私有
-	 */
 	private FileAgent() {
 	}
 
+	private static class FileAgentHolder {
+		private static final FileAgent agent = new FileAgent();
+	}
+
 	/**
-	 * @return 一个本类的实例
+	 * @return 一个本类的全局唯一实例
 	 */
-	public static synchronized FileAgent getInstance() {
-		if (agent == null) {
-			agent = new FileAgent();
-		}
-		return agent;
+	public static FileAgent getInstance() {
+		return FileAgentHolder.agent;
 	}
 
 	/**
 	 * 统一字符串的行结束符为'\n'
-	 * 
+	 *
 	 * @param text
 	 *            需要进行处理的字符串
 	 * @return 经过处理的字符串
