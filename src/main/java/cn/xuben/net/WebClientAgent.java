@@ -236,27 +236,18 @@ public final class WebClientAgent {
      * @param cs 网页文本的编码，若未指定(null)，方法内部会尝试从连接的状态信息中读取此值，再不行就采用系统默认编码
      */
     private StringBuilder connectAndReadFromConn(HttpURLConnection conn, Charset cs) throws IOException {
-        InputStream is = null;
+//        InputStream is = null;
         try {
             conn.connect();
-            if (cs == null) {
-                String cn = getEncodingNameFromConn(conn);
-                if (cn != null) {
-                    cs = Charset.forName(cn);
-                }
-            }
-            int code = conn.getResponseCode();
-            if (code >= 300 || code < 200) {
-                throw new IOException("the response code is " + code);
-            }
-            is = conn.getInputStream();
-            return StreamAgent.getInstance().getTextFromInputStream(is, cs);
+            return getContentFromConn(conn, cs);
+//            is = conn.getInputStream();
+//            return StreamAgent.getInstance().getTextFromInputStream(is, cs);
         } catch (IOException e) {
             throw e;
         } finally {
-            if (is != null) {
-                is.close();
-            }
+//            if (is != null) {
+//                is.close();
+//            }
             conn.disconnect();
         }
     }
